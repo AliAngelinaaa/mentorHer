@@ -16,10 +16,11 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+
       </Routes>
       <Footer />
-    </Router>
+    </Router>  
   );
 };
 
