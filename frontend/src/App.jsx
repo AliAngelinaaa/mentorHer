@@ -6,16 +6,15 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import GlobalStyles from './styles/GlobalStyles';
 
 const App = () => {
   return (
     <Router>
-      <GlobalStyles />
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
 
       </Routes>
