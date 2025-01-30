@@ -10,6 +10,7 @@ const passport = require('./config/passport');
 const MongoStore = require('connect-mongo');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/auth');
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -30,8 +31,8 @@ app.use(cors({
 // Security headers - updated for Google OAuth compatibility
 app.use((req, res, next) => {
   // Allow popups but maintain security
-  res.header('Cross-Origin-Opener-Policy', 'unsafe-none');
-  res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.header('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.header('Cross-Origin-Embedder-Policy', 'require-corp');
   
   // Additional recommended security headers
   res.header('X-Frame-Options', 'SAMEORIGIN');
@@ -57,22 +58,50 @@ app.use(session({
   }
 }));
 
+// Add view engine setup
+app.set('view engine', 'ejs');
+
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Remove the duplicate Google OAuth routes from here and use the router instead
+app.use('/auth', authRoutes);  // Mount auth routes under /auth prefix
+
+// Update login route to include Google login link
+app.get("/login", (req, res) => {
+  res.render("login");  // removed .ejs extension as it's not needed
+});
+
+app.get("/dashboard", (req, res) => {   
+  if (!req.isAuthenticated()) {
+    return res.redirect('/login');
+  }
+  res.render("dashboard", { name: req.user.name });  // removed .ejs extension
+});
+
+app.get('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) { return next(err); }
+    res.redirect('/login');
+  });
+});
+
+checkLoggedIn = (req, res, next) => {
+  if (req.isAuthenticated()) { 
+       return res.redirect("/dashboard")
+   }
+  next()
+}
+app.delete("/logout", (req,res) => {
+  req.logOut()
+  res.redirect("/login")
+  console.log(`-------> User Logged out`)
+})
+
 // Use the routers
 app.use('/profiles', profileRoutes);
 app.use('/match', matchesRouter);  // All match routes will be prefixed with /auth
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
-  });
-});
 
 app.listen(3000, () => {
    console.log('Server running on port 3000');
